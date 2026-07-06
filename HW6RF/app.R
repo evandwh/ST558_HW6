@@ -2,6 +2,7 @@ library(shiny)
 library(shinyalert)
 library(tidyverse)
 
+# helpers.R contains names of variables and category levels for the dataset
 source("helpers.R")
 
 # Define UI for application that draws a histogram
@@ -11,15 +12,19 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       h2("Select Variables to Find Correlation:"),
+      # two selectize inputs
       selectizeInput(inputId = "corr_x", label = "x Variable", choices = numeric_vars, selected = "PINCP"),
       selectizeInput(inputId = "corr_y", label = "y Variable", choices = numeric_vars, selected = "JWMNP"),
       br(),
       h2("Choose a subset of the data:"),
+      # three radio inputs.  names and values redefined within
       radioButtons(inputId = "hhl_corr", label = "Household Language", choiceNames = c("All", "English only", "Spanish", "Other"), choiceValues =  c("all", "english", "spanish", "other"), selected = "all"),
       radioButtons(inputId = "fs_corr", label = "SNAP Recipient", choiceNames = c("All", "Yes", "No"), choiceValues =  c("all", "yes", "no"), selected = "all"),      
       radioButtons(inputId = "schl_corr", label = "Educational attainment", choiceNames = c("All", "High School not Completed", "High School or GED", "College Degree"), choiceValues =  c("all", "no_hs", "hs", "college"), selected = "all"),      
       h2("Select a Sample Size"),
+      # slider input for sample size
       sliderInput(inputId = "corr_n", label = NULL, min = 20, max = 500, value = 20),
+      # action button to get the sample
       actionButton("corr_sample","Get a Sample!")
     ),
     mainPanel(
@@ -41,6 +46,7 @@ ui <- fluidPage(
   )
 )
 
+# my_sample is read from the dataset separate from UI and Server sections
 my_sample <- readRDS("my_sample_temp.rds")
 
 # Define server logic required to draw a histogram
@@ -89,6 +95,8 @@ server <- function(input, output, session) {
     # #observeEvent() to look for the action button (corr_sample)
     observeEvent(input$corr_sample,{
 
+      # the following if statements connect the radio inputs to the appropriate subsetting levels
+      
       if(input$hhl_corr == "all"){
         hhl_sub <- HHLvals
       } else if(input$hhl_corr == "english"){
@@ -119,8 +127,10 @@ server <- function(input, output, session) {
         schl_sub <- SCHLvals[as.character(20:24)]
       }
 
+      #create corr_vars to hold the two correlation variable inputs
       corr_vars <- c(input$corr_x, input$corr_y)
 
+      # subset the data based on selectize and radio inputs
       subsetted_data <- my_sample |>
         filter(#cat vars first
           HHLfac %in% hhl_sub,
@@ -137,6 +147,7 @@ server <- function(input, output, session) {
         {if("PINCP" %in% corr_vars) filter(., AGEP > 18) else .} %>%
         {if("JWMNP" %in% corr_vars) filter(., !is.na(JWMNP)) else .}
 
+      # take the sample of size corr_n
       index <- sample(1:nrow(subsetted_data),
                       size = input$corr_n,
                       replace = TRUE,
