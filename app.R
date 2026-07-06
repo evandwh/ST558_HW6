@@ -1,3 +1,11 @@
+#################################################
+#  ST 558                                       #
+#  HW #6                                        #
+#  Ryan Friedman, Evan Whitfield, Ralph Church  #
+#  7/6/2026                                     #
+#################################################
+
+
 library(shiny)
 library(shinyalert)
 library(tidyverse)
